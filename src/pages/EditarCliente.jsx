@@ -3,20 +3,28 @@ import {
   useLoaderData,
   useActionData,
   useNavigate,
+  redirect,
 } from "react-router-dom";
 import Error from "../components/Error";
 import Formulario from "../components/Formulario";
-import { getCliente } from "../data/clientes";
+import { getCliente, updateClient } from "../data/clientes";
 
-export function loader({ params }) {
+export async function loader({ params }) {
   const { clienteId } = params;
 
-  const cliente = getCliente(clienteId);
+  const cliente = await getCliente(clienteId);
+
+  if (Object.values(cliente).length === 0) {
+    throw new Response("", {
+      status: 400,
+      statusText: "Client not found",
+    });
+  }
 
   return cliente;
 }
 
-export async function action({ request }) {
+export async function action({ request, params }) {
   const formdata = await request.formData();
   const datos = Object.fromEntries(formdata);
 
@@ -37,6 +45,13 @@ export async function action({ request }) {
 
   //Retorno error si hay algo en el array
   if (Object.keys(error).length) return error;
+
+  const clienteId = params.clienteId;
+
+  console.log(clienteId);
+
+  await updateClient(datos, clienteId);
+  return redirect("/");
 }
 
 const EditarCliente = () => {
@@ -64,7 +79,7 @@ const EditarCliente = () => {
       <div className="bg-white py-10 px-5 my-2 shadow rounded-md md:w-3/4 mx-auto mb-20">
         {error?.length && error.map((err, i) => <Error err={err} key={i} />)}
         <Form method="post" noValidate>
-          <Formulario />
+          <Formulario cliente={cliente} />
           <input
             type="submit"
             className="mt-5 w-full bg-blue-800 p-3 uppercase font-bold text-white text-lg"
