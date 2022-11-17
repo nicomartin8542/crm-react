@@ -1,7 +1,20 @@
-import { useNavigate, Form, useActionData, redirect } from "react-router-dom";
+import {
+  Form,
+  useLoaderData,
+  useActionData,
+  useNavigate,
+} from "react-router-dom";
 import Error from "../components/Error";
 import Formulario from "../components/Formulario";
-import { crearClient } from "../data/clientes";
+import { getCliente } from "../data/clientes";
+
+export function loader({ params }) {
+  const { clienteId } = params;
+
+  const cliente = getCliente(clienteId);
+
+  return cliente;
+}
 
 export async function action({ request }) {
   const formdata = await request.formData();
@@ -24,19 +37,20 @@ export async function action({ request }) {
 
   //Retorno error si hay algo en el array
   if (Object.keys(error).length) return error;
-
-  //Si todo sale bien creo el cliente
-  await crearClient(datos);
-  return redirect("/");
 }
 
-const ClienteNuevo = () => {
-  const navigate = useNavigate();
+const EditarCliente = () => {
+  const cliente = useLoaderData();
   const error = useActionData();
+  const navigate = useNavigate();
+
   return (
-    <>
-      <h1 className="font-black text-4xl text-blue-900">Nuevo cliente</h1>
-      <p className="mt-3"> Llena los datos para registrar un nuevo cliente</p>
+    <div>
+      <h1 className="font-black text-4xl text-blue-900">Editar Cliente</h1>
+      <p className="mt-3">
+        {" "}
+        Llena los datos para editar el cliente seleccionado
+      </p>
 
       <div className="flex justify-end">
         <button
@@ -47,20 +61,19 @@ const ClienteNuevo = () => {
         </button>
       </div>
 
-      <div className="bg-white shadow rounded-md md:w-3/4 mx-auto my-2 mb-20 px-5 py-10">
+      <div className="bg-white py-10 px-5 my-2 shadow rounded-md md:w-3/4 mx-auto mb-20">
         {error?.length && error.map((err, i) => <Error err={err} key={i} />)}
-
         <Form method="post" noValidate>
           <Formulario />
           <input
             type="submit"
             className="mt-5 w-full bg-blue-800 p-3 uppercase font-bold text-white text-lg"
-            value="Registrar Cliente"
+            value="Editar Cliente"
           />
         </Form>
       </div>
-    </>
+    </div>
   );
 };
 
-export default ClienteNuevo;
+export default EditarCliente;
